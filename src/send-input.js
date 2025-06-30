@@ -1,5 +1,5 @@
 const config = await fetch("/config.json").then((res) => res.json());
-console.log("Config loaded:", config);
+
 const socket = new WebSocket(
   `ws://${config.network.host}:${config.network.remote_port}`
 );
@@ -27,11 +27,9 @@ let lastSent = 0;
 socket.onopen = () => console.log("WebSocket connected");
 socket.onerror = (err) => console.error("WebSocket error", err);
 
-document
-  .getElementById("show-keyboard")
-  .addEventListener("click", () => {
-    keyboardInput.focus();
-  });
+document.getElementById("show-keyboard").addEventListener("click", () => {
+  keyboardInput.focus();
+});
 
 keyboardInput.addEventListener("keydown", (event) => {
   sendMessage({ type: "key", key: event.key });
