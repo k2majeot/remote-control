@@ -24,6 +24,7 @@ let startY = null;
 let lastX = null;
 let lastY = null;
 let moved = false;
+let dragging = false;
 let lastSent = 0;
 let isScrolling = false;
 let scrollLastY = null;
@@ -47,13 +48,16 @@ keyboardInput.addEventListener("blur", () => {
 inputBox.addEventListener("touchstart", (event) => {
   isTouching = true;
   moved = false;
+  dragging = false;
   const touch = event.touches[0];
   startX = lastX = touch.clientX;
   startY = lastY = touch.clientY;
 });
 
 inputBox.addEventListener("touchend", () => {
-  if (!moved) {
+  if (dragging) {
+    sendMessage({ type: "up" });
+  } else if (!moved) {
     sendMessage({ type: "press" });
   }
   isTouching = false;
@@ -62,15 +66,20 @@ inputBox.addEventListener("touchend", () => {
   lastX = null;
   lastY = null;
   moved = false;
+  dragging = false;
 });
 
 inputBox.addEventListener("touchcancel", () => {
+  if (dragging) {
+    sendMessage({ type: "up" });
+  }
   isTouching = false;
   startX = null;
   startY = null;
   lastX = null;
   lastY = null;
   moved = false;
+  dragging = false;
 });
 
 inputBox.addEventListener("keydown", (event) => {
@@ -94,6 +103,10 @@ inputBox.addEventListener(
       Math.abs(touch.clientY - startY) > moveThreshold
     ) {
       moved = true;
+      if (!dragging) {
+        sendMessage({ type: "down" });
+        dragging = true;
+      }
     }
     lastX = touch.clientX;
     lastY = touch.clientY;
