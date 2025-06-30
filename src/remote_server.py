@@ -16,6 +16,7 @@ with open(CONFIG_PATH, "r") as file:
     SETTINGS = CONFIG["settings"]
 
 SENSITIVITY = SETTINGS.get("sensitivity", 4)
+SCROLL_FACTOR = SETTINGS.get("scroll_factor", 120)
 PORT = NETWORK.get("remote_port", 9000)
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -54,6 +55,10 @@ def press_key(key: str):
     user32.keybd_event(vk, 0, 0, 0)
     user32.keybd_event(vk, 0, 2, 0)
 
+def scroll_mouse(dy):
+    delta = int(-dy * SCROLL_FACTOR)
+    user32.mouse_event(0x0800, 0, 0, delta, 0)
+
 def input_worker():
     while True:
         item = input_queue.get()
@@ -64,6 +69,8 @@ def input_worker():
         elif item["type"] == "press":
             user32.mouse_event(0x0002, 0, 0, 0, 0)
             user32.mouse_event(0x0004, 0, 0, 0, 0)
+        elif item["type"] == "scroll":
+            scroll_mouse(item["dy"])
         input_queue.task_done()
 
 threading.Thread(target=input_worker, daemon=True).start()
@@ -80,6 +87,8 @@ async def handler(websocket):
                 input_queue.put({"type": "key", "key": data.get("key", "")})
             elif data["type"] == "press":
                 input_queue.put({"type": "press"})
+            elif data["type"] == "scroll":
+                input_queue.put({"type": "scroll", "dy": data.get("dy", 0)})
         except json.JSONDecodeError:
             print("Invalid JSON")
 

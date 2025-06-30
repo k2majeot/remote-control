@@ -5,6 +5,7 @@ const socket = new WebSocket(
 );
 const inputBox = document.getElementById("input-box");
 const keyboardInput = document.getElementById("keyboard-input");
+const scrollBar = document.getElementById("scroll-bar");
 const throttleMs = config.settings.throttle_ms;
 const moveThreshold = 5;
 
@@ -23,6 +24,9 @@ let lastX = null;
 let lastY = null;
 let moved = false;
 let lastSent = 0;
+let isScrolling = false;
+let scrollLastY = null;
+let lastScrollSent = 0;
 
 socket.onopen = () => console.log("WebSocket connected");
 socket.onerror = (err) => console.error("WebSocket error", err);
@@ -97,3 +101,37 @@ inputBox.addEventListener(
   },
   { passive: false }
 );
+
+scrollBar.addEventListener("touchstart", (event) => {
+  isScrolling = true;
+  const touch = event.touches[0];
+  scrollLastY = touch.clientY;
+});
+
+scrollBar.addEventListener(
+  "touchmove",
+  (event) => {
+    if (!isScrolling || !event.touches.length) return;
+
+    const now = Date.now();
+    if (now - lastScrollSent < throttleMs) return;
+    lastScrollSent = now;
+
+    const touch = event.touches[0];
+    const dy = touch.clientY - scrollLastY;
+    scrollLastY = touch.clientY;
+
+    sendMessage({ type: "scroll", dy });
+  },
+  { passive: false }
+);
+
+scrollBar.addEventListener("touchend", () => {
+  isScrolling = false;
+  scrollLastY = null;
+});
+
+scrollBar.addEventListener("touchcancel", () => {
+  isScrolling = false;
+  scrollLastY = null;
+});

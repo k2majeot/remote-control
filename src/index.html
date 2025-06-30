@@ -16,6 +16,15 @@
         background-color: #f0f0f0;
         touch-action: none;
       }
+      #scroll-bar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 50px;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.05);
+        touch-action: none;
+      }
       #show-keyboard {
         position: absolute;
         top: 20px;
@@ -38,6 +47,7 @@
       style="position: absolute; opacity: 0; height: 0; width: 0; border: none"
     />
     <div id="input-box" tabindex="0" style="outline: none"></div>
+    <div id="scroll-bar"></div>
     <script type="module" src="send-input.js"></script>
   </body>
 </html>
