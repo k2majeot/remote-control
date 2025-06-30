@@ -17,7 +17,7 @@ with open(CONFIG_PATH, "r") as file:
 
 SENSITIVITY = SETTINGS.get("sensitivity", 4)
 SCROLL_FACTOR = SETTINGS.get("scroll_factor", 120)
-SCROLLBAR_SENSITIVITY = SETTINGS.get("scrollbar_sensitivity", 1)
+SCROLL_SENSITIVITY = SETTINGS.get("scroll_sensitivity", SETTINGS.get("scrollbar_sensitivity", 1))
 PORT = NETWORK.get("remote_port", 9000)
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -57,7 +57,7 @@ def press_key(key: str):
     user32.keybd_event(vk, 0, 2, 0)
 
 def scroll_mouse(dy):
-    delta = int(-dy * SCROLL_FACTOR * SCROLLBAR_SENSITIVITY)
+    delta = int(-dy * SCROLL_FACTOR * SCROLL_SENSITIVITY)
     user32.mouse_event(0x0800, 0, 0, delta, 0)
 
 def input_worker():
