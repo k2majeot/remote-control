@@ -6,6 +6,14 @@ const socket = new WebSocket(
 const inputBox = document.getElementById("input-box");
 const throttleMs = config.settings.throttle_ms;
 
+inputBox.focus();
+
+function sendMessage(data) {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify(data));
+  }
+}
+
 let isTouching = false;
 let lastX = null;
 let lastY = null;
@@ -16,6 +24,7 @@ socket.onerror = (err) => console.error("WebSocket error", err);
 
 inputBox.addEventListener("touchstart", (event) => {
   isTouching = true;
+  sendMessage({ type: "press" });
   const touch = event.touches[0];
   lastX = touch.clientX;
   lastY = touch.clientY;
@@ -33,6 +42,10 @@ inputBox.addEventListener("touchcancel", () => {
   lastY = null;
 });
 
+inputBox.addEventListener("keydown", (event) => {
+  sendMessage({ type: "key", key: event.key });
+});
+
 inputBox.addEventListener(
   "touchmove",
   (event) => {
@@ -48,9 +61,7 @@ inputBox.addEventListener(
     lastX = touch.clientX;
     lastY = touch.clientY;
 
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ dx, dy }));
-    }
+    sendMessage({ type: "move", dx, dy });
   },
   { passive: false }
 );
