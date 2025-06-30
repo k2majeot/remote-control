@@ -5,9 +5,9 @@ const socket = new WebSocket(
 );
 const inputBox = document.getElementById("input-box");
 const keyboardInput = document.getElementById("keyboard-input");
-const scrollBar = document.getElementById("scroll-bar");
 const throttleMs = config.settings.throttle_ms;
-const scrollBarSensitivity = config.settings.scrollbar_sensitivity || 1;
+const scrollSensitivity = config.settings.scroll_sensitivity || 1;
+const pressThreshold = config.settings.press_threshold_ms || 500;
 const moveThreshold = 5;
 
 inputBox.focus();
@@ -25,8 +25,8 @@ let lastX = null;
 let lastY = null;
 let moved = false;
 let dragging = false;
+let longPressTimer = null;
 let lastSent = 0;
-let touchCount = 0;
 let isScrolling = false;
 let scrollLastY = null;
 let lastScrollSent = 0;
@@ -46,50 +46,73 @@ keyboardInput.addEventListener("blur", () => {
   inputBox.focus();
 });
 
+function getAverageY(touches) {
+  let sum = 0;
+  for (let i = 0; i < touches.length; i++) sum += touches[i].clientY;
+  return sum / touches.length;
+}
+
 inputBox.addEventListener("touchstart", (event) => {
   isTouching = true;
   moved = false;
-  touchCount = event.touches.length;
   const touch = event.touches[0];
   startX = lastX = touch.clientX;
   startY = lastY = touch.clientY;
-  if (touchCount >= 2) {
-    sendMessage({ type: "down" });
-    dragging = true;
+  if (event.touches.length >= 2) {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    isScrolling = true;
+    scrollLastY = getAverageY(event.touches);
   } else {
-    dragging = false;
+    isScrolling = false;
+    scrollLastY = null;
+    longPressTimer = setTimeout(() => {
+      sendMessage({ type: "down" });
+      dragging = true;
+    }, pressThreshold);
   }
 });
 
 inputBox.addEventListener("touchend", (event) => {
-  if (event.touches.length < 2 && dragging) {
-    sendMessage({ type: "up" });
-    dragging = false;
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
   }
-  if (event.touches.length === 0) {
-    if (!moved) {
+
+  if (isScrolling && event.touches.length < 2) {
+    isScrolling = false;
+    scrollLastY = null;
+  }
+
+  if (!event.touches.length) {
+    if (dragging) {
+      sendMessage({ type: "up" });
+      dragging = false;
+    } else if (!moved) {
       sendMessage({ type: "press" });
     }
     isTouching = false;
-    startX = null;
-    startY = null;
-    lastX = null;
-    lastY = null;
+    startX = startY = lastX = lastY = null;
     moved = false;
   }
 });
 
-inputBox.addEventListener("touchcancel", (event) => {
+inputBox.addEventListener("touchcancel", () => {
   if (dragging) {
     sendMessage({ type: "up" });
   }
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
   isTouching = false;
-  startX = null;
-  startY = null;
-  lastX = null;
-  lastY = null;
-  moved = false;
   dragging = false;
+  isScrolling = false;
+  startX = startY = lastX = lastY = null;
+  scrollLastY = null;
+  moved = false;
 });
 
 inputBox.addEventListener("keydown", (event) => {
@@ -106,22 +129,34 @@ inputBox.addEventListener(
     lastSent = now;
 
     const touch = event.touches[0];
-    const dx = touch.clientX - lastX;
-    const dy = touch.clientY - lastY;
+
     if (
       Math.abs(touch.clientX - startX) > moveThreshold ||
       Math.abs(touch.clientY - startY) > moveThreshold
     ) {
       moved = true;
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
     }
 
-    if (event.touches.length >= 2 && !dragging) {
-      sendMessage({ type: "down" });
-      dragging = true;
-    } else if (event.touches.length < 2 && dragging) {
-      sendMessage({ type: "up" });
-      dragging = false;
+    if (!dragging && (isScrolling || event.touches.length >= 2)) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      isScrolling = true;
+      const avgY = getAverageY(event.touches);
+      const dy = (avgY - (scrollLastY ?? avgY)) * scrollSensitivity;
+      scrollLastY = avgY;
+      lastScrollSent = now;
+      sendMessage({ type: "scroll", dy });
+      return;
     }
+
+    const dx = touch.clientX - lastX;
+    const dy = touch.clientY - lastY;
     lastX = touch.clientX;
     lastY = touch.clientY;
 
@@ -130,36 +165,4 @@ inputBox.addEventListener(
   { passive: false }
 );
 
-scrollBar.addEventListener("touchstart", (event) => {
-  isScrolling = true;
-  const touch = event.touches[0];
-  scrollLastY = touch.clientY;
-});
 
-scrollBar.addEventListener(
-  "touchmove",
-  (event) => {
-    if (!isScrolling || !event.touches.length) return;
-
-    const now = Date.now();
-    if (now - lastScrollSent < throttleMs) return;
-    lastScrollSent = now;
-
-    const touch = event.touches[0];
-    const dy = (touch.clientY - scrollLastY) * scrollBarSensitivity;
-    scrollLastY = touch.clientY;
-
-    sendMessage({ type: "scroll", dy });
-  },
-  { passive: false }
-);
-
-scrollBar.addEventListener("touchend", () => {
-  isScrolling = false;
-  scrollLastY = null;
-});
-
-scrollBar.addEventListener("touchcancel", () => {
-  isScrolling = false;
-  scrollLastY = null;
-});

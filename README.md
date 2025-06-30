@@ -6,8 +6,8 @@ This project provides a simple remote control mechanism for a Windows machine us
 - **remote_server.py** – listens for WebSocket messages and converts them into mouse and keyboard events via the Windows API.
 - **http_server.py** – serves the web client (`index.html` and `send-input.js`) and a `config.json` file.
 - **send-input.js** – communicates with the remote server from the browser and sends touch or keyboard input.
-- Touch-friendly scroll bar on the right side of the page for sending scroll events.
-- Drag support by holding down on the touch area and moving to simulate a mouse drag.
+- Two finger drag on the touch area sends scroll events.
+- Long press and drag simulates a mouse drag.
 
 ## Quick start
 1. Install the Python dependencies:
@@ -25,7 +25,8 @@ This project provides a simple remote control mechanism for a Windows machine us
     "settings": {
       "sensitivity": 4,
       "throttle_ms": 16,
-      "scrollbar_sensitivity": 1
+      "scroll_sensitivity": 1,
+      "press_threshold_ms": 500
     }
    }
    ```
