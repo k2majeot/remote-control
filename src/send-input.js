@@ -25,6 +25,7 @@ let lastX = null;
 let lastY = null;
 let moved = false;
 let dragging = false;
+let touchCount = 0;
 let lastSent = 0;
 let isScrolling = false;
 let scrollLastY = null;
@@ -46,40 +47,56 @@ keyboardInput.addEventListener("blur", () => {
 });
 
 inputBox.addEventListener("touchstart", (event) => {
+  if (!isTouching) {
+    const touch = event.touches[0];
+    startX = lastX = touch.clientX;
+    startY = lastY = touch.clientY;
+  }
   isTouching = true;
   moved = false;
-  dragging = false;
-  const touch = event.touches[0];
-  startX = lastX = touch.clientX;
-  startY = lastY = touch.clientY;
+  touchCount = event.touches.length;
+  if (touchCount >= 2 && !dragging) {
+    sendMessage({ type: "down" });
+    dragging = true;
+  }
 });
 
-inputBox.addEventListener("touchend", () => {
+inputBox.addEventListener("touchend", (event) => {
+  touchCount = event.touches.length;
+  if (dragging && touchCount < 2) {
+    sendMessage({ type: "up" });
+    dragging = false;
+  }
+
+  if (!touchCount) {
+    if (!moved && !dragging) {
+      sendMessage({ type: "press" });
+    }
+    isTouching = false;
+    startX = null;
+    startY = null;
+    lastX = null;
+    lastY = null;
+    moved = false;
+  } else {
+    const touch = event.touches[0];
+    lastX = touch.clientX;
+    lastY = touch.clientY;
+  }
+});
+
+inputBox.addEventListener("touchcancel", (event) => {
   if (dragging) {
     sendMessage({ type: "up" });
-  } else if (!moved) {
-    sendMessage({ type: "press" });
+    dragging = false;
   }
   isTouching = false;
+  touchCount = 0;
   startX = null;
   startY = null;
   lastX = null;
   lastY = null;
   moved = false;
-  dragging = false;
-});
-
-inputBox.addEventListener("touchcancel", () => {
-  if (dragging) {
-    sendMessage({ type: "up" });
-  }
-  isTouching = false;
-  startX = null;
-  startY = null;
-  lastX = null;
-  lastY = null;
-  moved = false;
-  dragging = false;
 });
 
 inputBox.addEventListener("keydown", (event) => {
@@ -103,11 +120,13 @@ inputBox.addEventListener(
       Math.abs(touch.clientY - startY) > moveThreshold
     ) {
       moved = true;
-      if (!dragging) {
-        sendMessage({ type: "down" });
-        dragging = true;
-      }
     }
+
+    if (event.touches.length >= 2 && !dragging) {
+      sendMessage({ type: "down" });
+      dragging = true;
+    }
+
     lastX = touch.clientX;
     lastY = touch.clientY;
 
