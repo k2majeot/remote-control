@@ -4,7 +4,7 @@ This project provides a simple remote control mechanism for a Windows machine us
 
 ## Features
 - **remote_server.py** – listens for WebSocket messages and converts them into mouse and keyboard events via the Windows API.
-- **frontend_server.py** – serves the web client (`index.html` and `send-input.js`) and a `config.json` file.
+- **http_server.py** – serves the web client (`index.html` and `send-input.js`) and a `config.json` file.
 - **send-input.js** – communicates with the remote server from the browser and sends touch or keyboard input.
 - Touch-friendly scroll bar on the right side of the page for sending scroll events.
 
@@ -21,22 +21,25 @@ This project provides a simple remote control mechanism for a Windows machine us
        "remote_port": 9000,
        "frontend_port": 8000
      },
-     "settings": {
-       "sensitivity": 4,
-       "throttle_ms": 16
-     }
+    "settings": {
+      "sensitivity": 4,
+      "throttle_ms": 16,
+      "scrollbar_sensitivity": 1
+    }
    }
    ```
-3. Run the WebSocket server (Windows only):
-   ```bash
-   python remote_server.py
+3. Start the servers (Windows):
+   ```cmd
+   remote.cmd
    ```
-4. In a separate terminal start the HTTP server:
+   This launches both `remote_server.py` and `http_server.py`.
+   On other platforms run them manually:
    ```bash
-   python frontend_server.py
+   python src/remote_server.py
+   python src/http_server.py
    ```
-5. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
+4. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
 
 ## Notes
 - The `remote_server.py` script relies on the Windows user32 API and must be run on a Windows machine.
-- The `frontend_server.py` can be served from any environment that can reach the WebSocket server.
+- The `http_server.py` can be served from any environment that can reach the WebSocket server.
