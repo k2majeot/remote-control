@@ -1,11 +1,15 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             if self.path == "/" or self.path == "/index.html":
-                with open("index.html", "rb") as file:
+                file_path = os.path.join(SCRIPT_DIR, "index.html")
+                with open(file_path, "rb") as file:
                     content = file.read()
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
@@ -13,7 +17,8 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(content)
 
             elif self.path == "/config.json":
-                with open("config.json", "rb") as file:
+                file_path = os.path.join(SCRIPT_DIR, "config.json")
+                with open(file_path, "rb") as file:
                     content = file.read()
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
@@ -21,19 +26,28 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(content)
 
             elif self.path == "/send-input.js":
-                with open("send-input.js", "rb") as file:
+                file_path = os.path.join(SCRIPT_DIR, "send-input.js")
+                with open(file_path, "rb") as file:
                     content = file.read()
                 self.send_response(200)
                 self.send_header("Content-type", "application/javascript")
                 self.end_headers()
                 self.wfile.write(content)
-                
-        except:
+
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"404 Not Found")
+
+        except Exception as e:
             self.send_response(500)
             self.end_headers()
-            self.wfile.write(b"500 Internal Server Error")
+            error_msg = f"500 Internal Server Error: {str(e)}"
+            self.wfile.write(error_msg.encode())
+            print(f"Error while serving {self.path}: {e}")
 
-with open("config.json", "r") as file:
+CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
+with open(CONFIG_PATH, "r") as file:
     CONFIG = json.load(file)
     NETWORK = CONFIG["network"]
 

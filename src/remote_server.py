@@ -5,9 +5,12 @@ import threading
 import queue
 import ctypes
 from ctypes import wintypes
+import os
 
-# Load config
-with open("config.json", "r") as file:
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
+
+with open(CONFIG_PATH, "r") as file:
     CONFIG = json.load(file)
     NETWORK = CONFIG["network"]
     SETTINGS = CONFIG["settings"]
@@ -15,13 +18,10 @@ with open("config.json", "r") as file:
 SENSITIVITY = SETTINGS.get("sensitivity", 4)
 PORT = NETWORK.get("remote_port", 9000)
 
-# Windows API for mouse + keyboard
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
-# Input queue for threading
 input_queue = queue.Queue()
 
-# Special keys map
 SPECIAL_KEYS = {
     "Backspace": 0x08,
     "Tab": 0x09,
@@ -51,10 +51,9 @@ def press_key(key: str):
     else:
         print(f"Unsupported key: {key}")
         return
-    user32.keybd_event(vk, 0, 0, 0)  # key down
-    user32.keybd_event(vk, 0, 2, 0)  # key up
+    user32.keybd_event(vk, 0, 0, 0)
+    user32.keybd_event(vk, 0, 2, 0)
 
-# Background worker
 def input_worker():
     while True:
         item = input_queue.get()
@@ -63,14 +62,12 @@ def input_worker():
         elif item["type"] == "key":
             press_key(item["key"])
         elif item["type"] == "press":
-            user32.mouse_event(0x0002, 0, 0, 0, 0)  # Left down
-            user32.mouse_event(0x0004, 0, 0, 0, 0)  # Left up
+            user32.mouse_event(0x0002, 0, 0, 0, 0)
+            user32.mouse_event(0x0004, 0, 0, 0, 0)
         input_queue.task_done()
 
-# Start worker
 threading.Thread(target=input_worker, daemon=True).start()
 
-# WebSocket handler
 async def handler(websocket):
     async for msg in websocket:
         try:
@@ -86,7 +83,6 @@ async def handler(websocket):
         except json.JSONDecodeError:
             print("Invalid JSON")
 
-# Start server
 async def main():
     print(f"WebSocket server running at ws://{NETWORK['host']}:{PORT}")
     async with websockets.serve(handler, "0.0.0.0", PORT):
