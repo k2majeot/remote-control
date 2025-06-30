@@ -26,6 +26,7 @@ let lastY = null;
 let moved = false;
 let dragging = false;
 let lastSent = 0;
+let touchCount = 0;
 let isScrolling = false;
 let scrollLastY = null;
 let lastScrollSent = 0;
@@ -48,28 +49,37 @@ keyboardInput.addEventListener("blur", () => {
 inputBox.addEventListener("touchstart", (event) => {
   isTouching = true;
   moved = false;
-  dragging = false;
+  touchCount = event.touches.length;
   const touch = event.touches[0];
   startX = lastX = touch.clientX;
   startY = lastY = touch.clientY;
-});
-
-inputBox.addEventListener("touchend", () => {
-  if (dragging) {
-    sendMessage({ type: "up" });
-  } else if (!moved) {
-    sendMessage({ type: "press" });
+  if (touchCount >= 2) {
+    sendMessage({ type: "down" });
+    dragging = true;
+  } else {
+    dragging = false;
   }
-  isTouching = false;
-  startX = null;
-  startY = null;
-  lastX = null;
-  lastY = null;
-  moved = false;
-  dragging = false;
 });
 
-inputBox.addEventListener("touchcancel", () => {
+inputBox.addEventListener("touchend", (event) => {
+  if (event.touches.length < 2 && dragging) {
+    sendMessage({ type: "up" });
+    dragging = false;
+  }
+  if (event.touches.length === 0) {
+    if (!moved) {
+      sendMessage({ type: "press" });
+    }
+    isTouching = false;
+    startX = null;
+    startY = null;
+    lastX = null;
+    lastY = null;
+    moved = false;
+  }
+});
+
+inputBox.addEventListener("touchcancel", (event) => {
   if (dragging) {
     sendMessage({ type: "up" });
   }
@@ -103,10 +113,14 @@ inputBox.addEventListener(
       Math.abs(touch.clientY - startY) > moveThreshold
     ) {
       moved = true;
-      if (!dragging) {
-        sendMessage({ type: "down" });
-        dragging = true;
-      }
+    }
+
+    if (event.touches.length >= 2 && !dragging) {
+      sendMessage({ type: "down" });
+      dragging = true;
+    } else if (event.touches.length < 2 && dragging) {
+      sendMessage({ type: "up" });
+      dragging = false;
     }
     lastX = touch.clientX;
     lastY = touch.clientY;
