@@ -7,6 +7,7 @@ This project provides a simple remote control mechanism for a Windows machine us
 - **http_server.py** – serves the web client (`index.html` and `send-input.js`) and a `config.json` file.
 - **send-input.js** – communicates with the remote server from the browser and sends touch or keyboard input.
 - Touch-friendly scroll bar on the right side of the page for sending scroll events.
+- Drag support by holding down on the touch area and moving to simulate a mouse drag.
 
 ## Quick start
 1. Install the Python dependencies:
