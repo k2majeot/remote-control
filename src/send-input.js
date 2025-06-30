@@ -7,6 +7,7 @@ const inputBox = document.getElementById("input-box");
 const keyboardInput = document.getElementById("keyboard-input");
 const scrollBar = document.getElementById("scroll-bar");
 const throttleMs = config.settings.throttle_ms;
+const scrollBarSensitivity = config.settings.scrollbar_sensitivity || 1;
 const moveThreshold = 5;
 
 inputBox.focus();
@@ -118,7 +119,7 @@ scrollBar.addEventListener(
     lastScrollSent = now;
 
     const touch = event.touches[0];
-    const dy = touch.clientY - scrollLastY;
+    const dy = (touch.clientY - scrollLastY) * scrollBarSensitivity;
     scrollLastY = touch.clientY;
 
     sendMessage({ type: "scroll", dy });
