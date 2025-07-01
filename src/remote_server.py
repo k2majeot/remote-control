@@ -14,6 +14,7 @@ with open(CONFIG_PATH, "r") as file:
     CONFIG = json.load(file)
     NETWORK = CONFIG["network"]
     SETTINGS = CONFIG["settings"]
+    WHITELIST = set(NETWORK.get("whitelist", []))
 
 SENSITIVITY = SETTINGS.get("sensitivity", 4)
 SCROLL_FACTOR = SETTINGS.get("scroll_factor", 120)
@@ -84,6 +85,11 @@ def input_worker():
 threading.Thread(target=input_worker, daemon=True).start()
 
 async def handler(websocket):
+    ip = websocket.remote_address[0]
+    if WHITELIST and ip not in WHITELIST:
+        print(f"Rejected connection from {ip}")
+        await websocket.close()
+        return
     async for msg in websocket:
         try:
             data = json.loads(msg)
