@@ -74,6 +74,9 @@ def input_worker():
             user32.mouse_event(0x0002, 0, 0, 0, 0)
         elif item["type"] == "up":
             user32.mouse_event(0x0004, 0, 0, 0, 0)
+        elif item["type"] == "right_press":
+            user32.mouse_event(0x0008, 0, 0, 0, 0)
+            user32.mouse_event(0x0010, 0, 0, 0, 0)
         elif item["type"] == "scroll":
             scroll_mouse(item["dy"])
         input_queue.task_done()
@@ -96,6 +99,8 @@ async def handler(websocket):
                 input_queue.put({"type": "down"})
             elif data["type"] == "up":
                 input_queue.put({"type": "up"})
+            elif data["type"] == "right_press":
+                input_queue.put({"type": "right_press"})
             elif data["type"] == "scroll":
                 input_queue.put({"type": "scroll", "dy": data.get("dy", 0)})
         except json.JSONDecodeError:

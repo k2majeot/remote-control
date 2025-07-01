@@ -4,6 +4,7 @@ const socket = new WebSocket(
   `ws://${config.network.host}:${config.network.remote_port}`
 );
 const inputBox = document.getElementById("input-box");
+const scrollBar = document.getElementById("scroll-bar");
 const keyboardInput = document.getElementById("keyboard-input");
 const throttleMs = config.settings.throttle_ms;
 const scrollSensitivity = config.settings.scroll_sensitivity || 1;
@@ -27,9 +28,11 @@ let moved = false;
 let dragging = false;
 let longPressTimer = null;
 let lastSent = 0;
-let isScrolling = false;
-let scrollLastY = null;
-let lastScrollSent = 0;
+let twoFingerTap = false;
+let twoFingerPositions = [];
+
+let scrollBarActive = false;
+let scrollBarLastY = null;
 
 socket.onopen = () => console.log("WebSocket connected");
 socket.onerror = (err) => console.error("WebSocket error", err);
@@ -46,11 +49,48 @@ keyboardInput.addEventListener("blur", () => {
   inputBox.focus();
 });
 
-function getAverageY(touches) {
-  let sum = 0;
-  for (let i = 0; i < touches.length; i++) sum += touches[i].clientY;
-  return sum / touches.length;
-}
+scrollBar.addEventListener("touchstart", (event) => {
+  scrollBarActive = true;
+  scrollBarLastY = event.touches[0].clientY;
+  event.preventDefault();
+});
+
+scrollBar.addEventListener("touchmove", (event) => {
+  if (!scrollBarActive) return;
+  const touch = event.touches[0];
+  const dy = (touch.clientY - scrollBarLastY) * scrollSensitivity;
+  scrollBarLastY = touch.clientY;
+  sendMessage({ type: "scroll", dy });
+  event.preventDefault();
+});
+
+scrollBar.addEventListener("touchend", () => {
+  scrollBarActive = false;
+  scrollBarLastY = null;
+});
+
+scrollBar.addEventListener("touchcancel", () => {
+  scrollBarActive = false;
+  scrollBarLastY = null;
+});
+
+scrollBar.addEventListener("mousedown", (event) => {
+  scrollBarActive = true;
+  scrollBarLastY = event.clientY;
+  event.preventDefault();
+});
+
+document.addEventListener("mousemove", (event) => {
+  if (!scrollBarActive) return;
+  const dy = (event.clientY - scrollBarLastY) * scrollSensitivity;
+  scrollBarLastY = event.clientY;
+  sendMessage({ type: "scroll", dy });
+});
+
+document.addEventListener("mouseup", () => {
+  scrollBarActive = false;
+  scrollBarLastY = null;
+});
 
 inputBox.addEventListener("touchstart", (event) => {
   isTouching = true;
@@ -58,16 +98,19 @@ inputBox.addEventListener("touchstart", (event) => {
   const touch = event.touches[0];
   startX = lastX = touch.clientX;
   startY = lastY = touch.clientY;
+
   if (event.touches.length >= 2) {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       longPressTimer = null;
     }
-    isScrolling = true;
-    scrollLastY = getAverageY(event.touches);
+    twoFingerTap = true;
+    twoFingerPositions = Array.from(event.touches).slice(0, 2).map((t) => ({
+      x: t.clientX,
+      y: t.clientY,
+    }));
   } else {
-    isScrolling = false;
-    scrollLastY = null;
+    twoFingerTap = false;
     longPressTimer = setTimeout(() => {
       sendMessage({ type: "down" });
       dragging = true;
@@ -81,9 +124,13 @@ inputBox.addEventListener("touchend", (event) => {
     longPressTimer = null;
   }
 
-  if (isScrolling && event.touches.length < 2) {
-    isScrolling = false;
-    scrollLastY = null;
+  if (twoFingerTap && event.touches.length === 0) {
+    sendMessage({ type: "right_press" });
+    twoFingerTap = false;
+    isTouching = false;
+    startX = startY = lastX = lastY = null;
+    moved = false;
+    return;
   }
 
   if (!event.touches.length) {
@@ -109,9 +156,8 @@ inputBox.addEventListener("touchcancel", () => {
   }
   isTouching = false;
   dragging = false;
-  isScrolling = false;
+  twoFingerTap = false;
   startX = startY = lastX = lastY = null;
-  scrollLastY = null;
   moved = false;
 });
 
@@ -141,17 +187,17 @@ inputBox.addEventListener(
       }
     }
 
-    if (!dragging && (isScrolling || event.touches.length >= 2)) {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
+    if (twoFingerTap && event.touches.length >= 2) {
+      const t1 = event.touches[0];
+      const t2 = event.touches[1];
+      if (
+        Math.abs(t1.clientX - twoFingerPositions[0].x) > moveThreshold ||
+        Math.abs(t1.clientY - twoFingerPositions[0].y) > moveThreshold ||
+        Math.abs(t2.clientX - twoFingerPositions[1].x) > moveThreshold ||
+        Math.abs(t2.clientY - twoFingerPositions[1].y) > moveThreshold
+      ) {
+        twoFingerTap = false;
       }
-      isScrolling = true;
-      const avgY = getAverageY(event.touches);
-      const dy = (avgY - (scrollLastY ?? avgY)) * scrollSensitivity;
-      scrollLastY = avgY;
-      lastScrollSent = now;
-      sendMessage({ type: "scroll", dy });
       return;
     }
 
