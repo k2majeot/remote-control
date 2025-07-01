@@ -18,11 +18,12 @@ This project provides a simple remote control mechanism for a Windows machine us
 2. Create a `config.json` file. A minimal example:
    ```json
    {
-     "network": {
-       "host": "localhost",
-       "remote_port": 9000,
-       "frontend_port": 8000
-     },
+  "network": {
+    "host": "localhost",
+    "remote_port": 9000,
+    "frontend_port": 8000,
+    "whitelist": ["127.0.0.1"]
+  },
     "settings": {
       "sensitivity": 4,
       "throttle_ms": 16,
