@@ -36,7 +36,7 @@ This project provides a simple remote control mechanism for a Windows machine us
    ```cmd
    remote.cmd
    ```
-   This runs `run_servers.py` which launches both `remote_server.py` and
+This runs `src/run_servers.py` which launches both `remote_server.py` and
    `http_server.py` and prints their logs in the current console.
    On other platforms run them manually:
    ```bash
