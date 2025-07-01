@@ -18,12 +18,12 @@ This project provides a simple remote control mechanism for a Windows machine us
 2. Create a `config.json` file. A minimal example:
    ```json
    {
-  "network": {
-    "host": "localhost",
-    "remote_port": 9000,
-    "frontend_port": 8000,
-    "whitelist": ["127.0.0.1"]
-  },
+     "network": {
+       "host": "localhost",
+       "remote_port": 9000,
+       "frontend_port": 8000,
+       "whitelist": ["127.0.0.1"]
+     },
     "settings": {
       "sensitivity": 4,
       "throttle_ms": 16,
@@ -32,7 +32,7 @@ This project provides a simple remote control mechanism for a Windows machine us
     }
    }
    ```
-3. Start the servers (Windows):
+4. Start the servers (Windows):
    ```cmd
    remote.cmd
    ```
@@ -42,7 +42,7 @@ This project provides a simple remote control mechanism for a Windows machine us
    python src/remote_server.py
    python src/http_server.py
    ```
-4. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
+5. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
 
 ## Notes
 - The `remote_server.py` script relies on the Windows user32 API and must be run on a Windows machine.
