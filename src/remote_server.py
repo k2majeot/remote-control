@@ -90,27 +90,32 @@ async def handler(websocket):
         print(f"Rejected connection from {ip}")
         await websocket.close()
         return
-    async for msg in websocket:
-        try:
-            data = json.loads(msg)
-            if data["type"] == "move":
-                dx = data.get("dx", 0) * SENSITIVITY
-                dy = data.get("dy", 0) * SENSITIVITY
-                input_queue.put({"type": "move", "dx": dx, "dy": dy})
-            elif data["type"] == "key":
-                input_queue.put({"type": "key", "key": data.get("key", "")})
-            elif data["type"] == "press":
-                input_queue.put({"type": "press"})
-            elif data["type"] == "down":
-                input_queue.put({"type": "down"})
-            elif data["type"] == "up":
-                input_queue.put({"type": "up"})
-            elif data["type"] == "right_press":
-                input_queue.put({"type": "right_press"})
-            elif data["type"] == "scroll":
-                input_queue.put({"type": "scroll", "dy": data.get("dy", 0)})
-        except json.JSONDecodeError:
-            print("Invalid JSON")
+    try:
+        async for msg in websocket:
+            try:
+                data = json.loads(msg)
+                if data["type"] == "move":
+                    dx = data.get("dx", 0) * SENSITIVITY
+                    dy = data.get("dy", 0) * SENSITIVITY
+                    input_queue.put({"type": "move", "dx": dx, "dy": dy})
+                elif data["type"] == "key":
+                    input_queue.put({"type": "key", "key": data.get("key", "")})
+                elif data["type"] == "press":
+                    input_queue.put({"type": "press"})
+                elif data["type"] == "down":
+                    input_queue.put({"type": "down"})
+                elif data["type"] == "up":
+                    input_queue.put({"type": "up"})
+                elif data["type"] == "right_press":
+                    input_queue.put({"type": "right_press"})
+                elif data["type"] == "scroll":
+                    input_queue.put({"type": "scroll", "dy": data.get("dy", 0)})
+            except json.JSONDecodeError:
+                print("Invalid JSON")
+    except websockets.exceptions.ConnectionClosedOK:
+        print(f"Connection from {ip} closed")
+    except (websockets.exceptions.ConnectionClosedError, ConnectionResetError, OSError) as e:
+        print(f"Connection from {ip} lost: {e}")
 
 async def main():
     print(f"WebSocket server running at ws://{NETWORK['host']}:{PORT}")
