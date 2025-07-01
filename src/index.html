@@ -22,6 +22,15 @@
         -ms-user-select: none;
         user-select: none;
       }
+      #scroll-bar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 60px;
+        height: 100%;
+        background-color: #e0e0e0;
+        touch-action: none;
+      }
       #show-keyboard {
         position: absolute;
         top: 20px;
@@ -47,6 +56,7 @@
       style="position: absolute; opacity: 0; height: 0; width: 0; border: none"
     />
     <div id="input-box" tabindex="0" style="outline: none"></div>
+    <div id="scroll-bar"></div>
     <script type="module" src="send-input.js"></script>
   </body>
 </html>
