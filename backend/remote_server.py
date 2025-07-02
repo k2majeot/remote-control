@@ -5,6 +5,7 @@ import queue
 import ctypes
 from ctypes import wintypes
 from pathlib import Path
+import ssl
 
 import websockets
 
@@ -17,6 +18,13 @@ with open(CONFIG_PATH, "r") as file:
     WHITELIST = set(CONFIG.get("whitelist", []))
     HOST = CONFIG.get("host", "localhost")
     PORT = CONFIG.get("remote_port", 9000)
+    CERT_FILE = CONFIG.get("certfile")
+    KEY_FILE = CONFIG.get("keyfile")
+
+SSL_CONTEXT = None
+if CERT_FILE and KEY_FILE:
+    SSL_CONTEXT = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    SSL_CONTEXT.load_cert_chain(CERT_FILE, KEY_FILE)
 
 SCROLL_FACTOR = 120
 
@@ -125,8 +133,9 @@ async def handler(websocket):
 
 
 async def main():
-    print(f"WebSocket server running at ws://{HOST}:{PORT}")
-    async with websockets.serve(handler, "0.0.0.0", PORT):
+    protocol = "wss" if SSL_CONTEXT else "ws"
+    print(f"WebSocket server running at {protocol}://{HOST}:{PORT}")
+    async with websockets.serve(handler, "0.0.0.0", PORT, ssl=SSL_CONTEXT):
         await asyncio.Future()
 
 

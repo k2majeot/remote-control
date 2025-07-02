@@ -17,13 +17,15 @@ This project provides a simple remote control mechanism for a Windows machine us
    ```bash
    pip install -r requirements.txt
    ```
-2. Create a `server_config.json` file in the base directory (the same folder as this README) and configure the servers:
+2. Create a `server_config.json` file in the base directory (the same folder as this README) and configure the servers. Set `certfile` and `keyfile` to enable TLS:
    ```json
    {
      "host": "localhost",
      "remote_port": 9000,
      "frontend_port": 8000,
-     "whitelist": ["127.0.0.1"]
+     "whitelist": ["127.0.0.1"],
+     "certfile": "cert.pem",
+     "keyfile": "key.pem"
    }
    ```
 3. Adjust the frontend settings in `frontend/settings.json`:
@@ -35,7 +37,7 @@ This project provides a simple remote control mechanism for a Windows machine us
      "press_threshold_ms": 500
    }
    ```
-   The `host` and `remote_port` values are automatically injected from
+   The `host`, `remote_port`, and TLS settings are automatically injected from
    `server_config.json` when the settings are served.
 4. Start the servers (Windows):
    ```cmd
@@ -47,7 +49,7 @@ This project provides a simple remote control mechanism for a Windows machine us
    python backend/remote_server.py
    python backend/http_server.py
    ```
-5. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
+5. Open a browser to `http(s)://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
 
 ## Notes
 

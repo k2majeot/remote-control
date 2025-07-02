@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import mimetypes
 from pathlib import Path
+import ssl
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 BASE_DIR = SCRIPT_DIR.parent
@@ -12,6 +13,8 @@ with open(CONFIG_PATH, "r") as file:
     CONFIG = json.load(file)
     WHITELIST = set(CONFIG.get("whitelist", []))
     FRONTEND_PORT = CONFIG.get("frontend_port", 8000)
+    CERT_FILE = CONFIG.get("certfile")
+    KEY_FILE = CONFIG.get("keyfile")
 
 
 class MyHandler(BaseHTTPRequestHandler):
@@ -30,6 +33,7 @@ class MyHandler(BaseHTTPRequestHandler):
                     settings = json.load(f)
                 settings["host"] = CONFIG.get("host", settings.get("host", "localhost"))
                 settings["remote_port"] = CONFIG.get("remote_port", settings.get("remote_port", 9000))
+                settings["secure"] = bool(CERT_FILE and KEY_FILE)
                 content = json.dumps(settings).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -61,5 +65,11 @@ class MyHandler(BaseHTTPRequestHandler):
 
 
 server = HTTPServer(("0.0.0.0", FRONTEND_PORT), MyHandler)
-print(f"Serving at http://localhost:{FRONTEND_PORT}")
+scheme = "http"
+if CERT_FILE and KEY_FILE:
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(CERT_FILE, KEY_FILE)
+    server.socket = context.wrap_socket(server.socket, server_side=True)
+    scheme = "https"
+print(f"Serving at {scheme}://localhost:{FRONTEND_PORT}")
 server.serve_forever()
