@@ -3,6 +3,7 @@
 This project provides a simple remote control mechanism for a Windows machine using a WebSocket server and a small touch friendly web client.
 
 ## Features
+
 - **backend/remote_server.py** – listens for WebSocket messages and converts them into mouse and keyboard events via the Windows API.
 - **backend/http_server.py** – serves the static frontend and enforces an IP whitelist.
 - **frontend/js/send-input.js** – communicates with the remote server from the browser and sends touch or keyboard input.
@@ -11,6 +12,7 @@ This project provides a simple remote control mechanism for a Windows machine us
 - Long press and drag simulates a mouse drag.
 
 ## Quick start
+
 1. Install the Python dependencies:
    ```bash
    pip install -r requirements.txt
@@ -33,7 +35,7 @@ This project provides a simple remote control mechanism for a Windows machine us
      "press_threshold_ms": 500
    }
    ```
-   The `remote_host` and `remote_port` values are automatically injected from
+   The `host` and `remote_port` values are automatically injected from
    `server_config.json` when the settings are served.
 4. Start the servers (Windows):
    ```cmd
@@ -48,8 +50,10 @@ This project provides a simple remote control mechanism for a Windows machine us
 5. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
 
 ## Notes
+
 - The `remote_server.py` script relies on the Windows user32 API and must be run on a Windows machine.
 - The `http_server.py` can be served from any environment that can reach the WebSocket server.
 
 ## Credits
+
 [Remote-control icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/remote-control "remote-control icons")

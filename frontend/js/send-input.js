@@ -1,8 +1,6 @@
 const settings = await fetch("/settings.json").then((res) => res.json());
 
-const socket = new WebSocket(
-  `ws://${settings.remote_host}:${settings.remote_port}`
-);
+const socket = new WebSocket(`ws://${settings.host}:${settings.remote_port}`);
 const inputBox = document.getElementById("input-box");
 const scrollBar = document.getElementById("scroll-bar");
 const keyboardInput = document.getElementById("keyboard-input");
