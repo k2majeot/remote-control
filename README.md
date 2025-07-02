@@ -15,7 +15,7 @@ This project provides a simple remote control mechanism for a Windows machine us
    ```bash
    pip install -r requirements.txt
    ```
-2. Configure the servers by editing `server_config.json`:
+2. Create a `server_config.json` file in the base directory (the same folder as this README) and configure the servers:
    ```json
    {
      "host": "localhost",
@@ -50,3 +50,6 @@ This project provides a simple remote control mechanism for a Windows machine us
 ## Notes
 - The `remote_server.py` script relies on the Windows user32 API and must be run on a Windows machine.
 - The `http_server.py` can be served from any environment that can reach the WebSocket server.
+
+## Credits
+[Remote-control icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/remote-control "remote-control icons")
