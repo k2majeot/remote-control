@@ -12,7 +12,9 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 processes = []
+
 
 def stream_output(proc: subprocess.Popen, name: str):
     for line in proc.stdout:
@@ -21,7 +23,7 @@ def stream_output(proc: subprocess.Popen, name: str):
 
 def start_script(name: str, script: str) -> subprocess.Popen:
     proc = subprocess.Popen(
-        [sys.executable, script],
+        [sys.executable, os.path.join(SCRIPT_DIR, script)],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -54,8 +56,8 @@ def main():
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    http_proc = start_script("HTTP server", os.path.join("src", "http_server.py"))
-    remote_proc = start_script("Remote server", os.path.join("src", "remote_server.py"))
+    http_proc = start_script("HTTP server", "http_server.py")
+    remote_proc = start_script("Remote server", "remote_server.py")
 
     processes.extend([http_proc, remote_proc])
 

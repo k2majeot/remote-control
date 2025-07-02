@@ -1,14 +1,15 @@
-const config = await fetch("/config.json").then((res) => res.json());
+const settings = await fetch("/settings.json").then((res) => res.json());
 
 const socket = new WebSocket(
-  `ws://${config.network.host}:${config.network.remote_port}`
+  `ws://${settings.remote_host}:${settings.remote_port}`
 );
 const inputBox = document.getElementById("input-box");
 const scrollBar = document.getElementById("scroll-bar");
 const keyboardInput = document.getElementById("keyboard-input");
-const throttleMs = config.settings.throttle_ms;
-const scrollSensitivity = config.settings.scroll_sensitivity || 1;
-const pressThreshold = config.settings.press_threshold_ms || 500;
+const throttleMs = settings.throttle_ms;
+const scrollSensitivity = settings.scroll_sensitivity || 1;
+const pressThreshold = settings.press_threshold_ms || 500;
+const sensitivity = settings.sensitivity || 1;
 const moveThreshold = 5;
 
 inputBox.focus();
@@ -105,10 +106,9 @@ inputBox.addEventListener("touchstart", (event) => {
       longPressTimer = null;
     }
     twoFingerTap = true;
-    twoFingerPositions = Array.from(event.touches).slice(0, 2).map((t) => ({
-      x: t.clientX,
-      y: t.clientY,
-    }));
+    twoFingerPositions = Array.from(event.touches)
+      .slice(0, 2)
+      .map((t) => ({ x: t.clientX, y: t.clientY }));
   } else {
     twoFingerTap = false;
     longPressTimer = setTimeout(() => {
@@ -201,8 +201,8 @@ inputBox.addEventListener(
       return;
     }
 
-    const dx = touch.clientX - lastX;
-    const dy = touch.clientY - lastY;
+    const dx = (touch.clientX - lastX) * sensitivity;
+    const dy = (touch.clientY - lastY) * sensitivity;
     lastX = touch.clientX;
     lastY = touch.clientY;
 
@@ -210,5 +210,3 @@ inputBox.addEventListener(
   },
   { passive: false }
 );
-
-

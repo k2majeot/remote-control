@@ -3,9 +3,9 @@
 This project provides a simple remote control mechanism for a Windows machine using a WebSocket server and a small touch friendly web client.
 
 ## Features
-- **remote_server.py** – listens for WebSocket messages and converts them into mouse and keyboard events via the Windows API.
-- **http_server.py** – serves the web client (`index.html` and `send-input.js`) and a `config.json` file.
-- **send-input.js** – communicates with the remote server from the browser and sends touch or keyboard input.
+- **backend/remote_server.py** – listens for WebSocket messages and converts them into mouse and keyboard events via the Windows API.
+- **backend/http_server.py** – serves the static frontend and enforces an IP whitelist.
+- **frontend/js/send-input.js** – communicates with the remote server from the browser and sends touch or keyboard input.
 - A scroll bar on the right side sends scroll events when dragged.
 - Two finger tap on the touch area triggers a right click.
 - Long press and drag simulates a mouse drag.
@@ -15,33 +15,35 @@ This project provides a simple remote control mechanism for a Windows machine us
    ```bash
    pip install -r requirements.txt
    ```
-2. Create a `config.json` file. A minimal example:
+2. Configure the servers by editing `server_config.json`:
    ```json
    {
-     "network": {
-       "host": "localhost",
-       "remote_port": 9000,
-       "frontend_port": 8000,
-       "whitelist": ["127.0.0.1"]
-     },
-    "settings": {
-      "sensitivity": 4,
-      "throttle_ms": 16,
-      "scroll_sensitivity": 1,
-      "press_threshold_ms": 500
-    }
+     "host": "localhost",
+     "remote_port": 9000,
+     "frontend_port": 8000,
+     "whitelist": ["127.0.0.1"]
+   }
+   ```
+3. Adjust the frontend settings in `frontend/settings.json`:
+   ```json
+   {
+     "sensitivity": 4,
+     "throttle_ms": 16,
+     "scroll_sensitivity": 1,
+     "press_threshold_ms": 500,
+     "remote_host": "localhost",
+     "remote_port": 9000
    }
    ```
 4. Start the servers (Windows):
    ```cmd
    remote.cmd
    ```
-This runs `src/run_servers.py` which launches both `remote_server.py` and
-   `http_server.py` and prints their logs in the current console.
+   This runs `backend/run_servers.py` which launches both `remote_server.py` and `http_server.py` and prints their logs in the current console.
    On other platforms run them manually:
    ```bash
-   python src/remote_server.py
-   python src/http_server.py
+   python backend/remote_server.py
+   python backend/http_server.py
    ```
 5. Open a browser to `http://<host>:<frontend_port>` on your phone or another device to control the machine running the servers.
 
