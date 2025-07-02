@@ -1,0 +1,8 @@
+{
+  "sensitivity": 4,
+  "throttle_ms": 16,
+  "scroll_sensitivity": 1,
+  "press_threshold_ms": 500,
+  "remote_host": "localhost",
+  "remote_port": 9000
+}

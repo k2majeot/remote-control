@@ -1,25 +1,24 @@
 import asyncio
-import websockets
 import json
 import threading
 import queue
 import ctypes
 from ctypes import wintypes
-import os
+from pathlib import Path
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
+import websockets
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+BASE_DIR = SCRIPT_DIR.parent
+CONFIG_PATH = BASE_DIR / "server_config.json"
 
 with open(CONFIG_PATH, "r") as file:
     CONFIG = json.load(file)
-    NETWORK = CONFIG["network"]
-    SETTINGS = CONFIG["settings"]
-    WHITELIST = set(NETWORK.get("whitelist", []))
+    WHITELIST = set(CONFIG.get("whitelist", []))
+    HOST = CONFIG.get("host", "localhost")
+    PORT = CONFIG.get("remote_port", 9000)
 
-SENSITIVITY = SETTINGS.get("sensitivity", 4)
-SCROLL_FACTOR = SETTINGS.get("scroll_factor", 120)
-SCROLL_SENSITIVITY = SETTINGS.get("scroll_sensitivity", SETTINGS.get("scrollbar_sensitivity", 1))
-PORT = NETWORK.get("remote_port", 9000)
+SCROLL_FACTOR = 120
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
@@ -41,10 +40,12 @@ SPECIAL_KEYS = {
     "Delete": 0x2E,
 }
 
+
 def move_mouse(dx, dy):
     pt = wintypes.POINT()
     user32.GetCursorPos(ctypes.byref(pt))
     user32.SetCursorPos(pt.x + int(dx), pt.y + int(dy))
+
 
 def press_key(key: str):
     if len(key) == 1:
@@ -57,9 +58,11 @@ def press_key(key: str):
     user32.keybd_event(vk, 0, 0, 0)
     user32.keybd_event(vk, 0, 2, 0)
 
+
 def scroll_mouse(dy):
-    delta = int(-dy * SCROLL_FACTOR * SCROLL_SENSITIVITY)
+    delta = int(-dy * SCROLL_FACTOR)
     user32.mouse_event(0x0800, 0, 0, delta, 0)
+
 
 def input_worker():
     while True:
@@ -82,7 +85,10 @@ def input_worker():
             scroll_mouse(item["dy"])
         input_queue.task_done()
 
-threading.Thread(target=input_worker, daemon=True).start()
+
+def start_worker():
+    threading.Thread(target=input_worker, daemon=True).start()
+
 
 async def handler(websocket):
     ip = websocket.remote_address[0]
@@ -95,8 +101,8 @@ async def handler(websocket):
             try:
                 data = json.loads(msg)
                 if data["type"] == "move":
-                    dx = data.get("dx", 0) * SENSITIVITY
-                    dy = data.get("dy", 0) * SENSITIVITY
+                    dx = data.get("dx", 0)
+                    dy = data.get("dy", 0)
                     input_queue.put({"type": "move", "dx": dx, "dy": dy})
                 elif data["type"] == "key":
                     input_queue.put({"type": "key", "key": data.get("key", "")})
@@ -117,9 +123,13 @@ async def handler(websocket):
     except (websockets.exceptions.ConnectionClosedError, ConnectionResetError, OSError) as e:
         print(f"Connection from {ip} lost: {e}")
 
+
 async def main():
-    print(f"WebSocket server running at ws://{NETWORK['host']}:{PORT}")
+    print(f"WebSocket server running at ws://{HOST}:{PORT}")
     async with websockets.serve(handler, "0.0.0.0", PORT):
         await asyncio.Future()
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    start_worker()
+    asyncio.run(main())
