@@ -1,6 +1,0 @@
-{
-  "host": "localhost",
-  "remote_port": 9000,
-  "frontend_port": 8000,
-  "whitelist": ["127.0.0.1", "192.168.6.181"]
-}
