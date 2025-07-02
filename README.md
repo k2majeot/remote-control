@@ -30,11 +30,11 @@ This project provides a simple remote control mechanism for a Windows machine us
      "sensitivity": 4,
      "throttle_ms": 16,
      "scroll_sensitivity": 1,
-     "press_threshold_ms": 500,
-     "remote_host": "localhost",
-     "remote_port": 9000
+     "press_threshold_ms": 500
    }
    ```
+   The `remote_host` and `remote_port` values are automatically injected from
+   `server_config.json` when the settings are served.
 4. Start the servers (Windows):
    ```cmd
    remote.cmd

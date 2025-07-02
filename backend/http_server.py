@@ -23,6 +23,20 @@ class MyHandler(BaseHTTPRequestHandler):
             return
         try:
             path = self.path.lstrip("/") or "index.html"
+
+            if path == "settings.json":
+                file_path = FRONTEND_DIR / "settings.json"
+                with open(file_path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                settings["remote_host"] = CONFIG.get("host", settings.get("remote_host", "localhost"))
+                settings["remote_port"] = CONFIG.get("remote_port", settings.get("remote_port", 9000))
+                content = json.dumps(settings).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
             file_path = FRONTEND_DIR / path
             if file_path.is_file():
                 content_type, _ = mimetypes.guess_type(str(file_path))
