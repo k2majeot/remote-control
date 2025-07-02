@@ -1,8 +1,10 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+import mimetypes
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PUBLIC_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "public"))
 
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
 with open(CONFIG_PATH, "r") as file:
@@ -18,45 +20,36 @@ class MyHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"403 Forbidden")
             return
+
         try:
-            if self.path == "/" or self.path == "/index.html":
-                file_path = os.path.join(SCRIPT_DIR, "index.html")
-                with open(file_path, "rb") as file:
-                    content = file.read()
+            path = self.path.lstrip("/") or "index.html"
+            file_path = os.path.join(PUBLIC_DIR, path)
+
+            if os.path.isfile(file_path):
+                content_type, _ = mimetypes.guess_type(file_path)
+                if content_type is None:
+                    content_type = "application/octet-stream"
+                if content_type.startswith("text/"):
+                    content_type += "; charset=utf-8"
+
+                with open(file_path, "rb") as f:
+                    content = f.read()
+
                 self.send_response(200)
-                self.send_header("Content-type", "text/html")
+                self.send_header("Content-Type", content_type)
                 self.end_headers()
                 self.wfile.write(content)
+                return
 
-            elif self.path == "/config.json":
-                file_path = os.path.join(SCRIPT_DIR, "config.json")
-                with open(file_path, "rb") as file:
-                    content = file.read()
-                self.send_response(200)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(content)
-
-            elif self.path == "/send-input.js":
-                file_path = os.path.join(SCRIPT_DIR, "send-input.js")
-                with open(file_path, "rb") as file:
-                    content = file.read()
-                self.send_response(200)
-                self.send_header("Content-type", "application/javascript")
-                self.end_headers()
-                self.wfile.write(content)
-
-            else:
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(b"404 Not Found")
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"404 Not Found")
 
         except Exception as e:
             self.send_response(500)
             self.end_headers()
-            error_msg = f"500 Internal Server Error: {str(e)}"
-            self.wfile.write(error_msg.encode())
-            print(f"Error while serving {self.path}: {e}")
+            self.wfile.write(f"500 Internal Server Error: {str(e)}".encode())
+
 
 server = HTTPServer(("0.0.0.0", NETWORK["frontend_port"]), MyHandler)
 print(f"Serving at http://localhost:{NETWORK['frontend_port']}")
