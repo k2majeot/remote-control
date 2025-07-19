@@ -17,10 +17,10 @@ This project provides a simple remote control mechanism for a Windows machine us
    ```bash
    pip install -r requirements.txt
    ```
-2. Create a `server_config.json` file in the base directory (the same folder as this README) and configure the servers. Set `certfile` and `keyfile` to enable TLS:
+2. Create a `server_config.json` file in the base directory (the same folder as this README) and configure the servers. The `host` value is automatically replaced with the machine's private IP when the servers start. Set `certfile` and `keyfile` to enable TLS:
    ```json
    {
-     "host": "localhost",
+  "host": "0.0.0.0",
      "remote_port": 9000,
      "frontend_port": 8000,
      "whitelist": ["127.0.0.1"],
@@ -41,9 +41,9 @@ This project provides a simple remote control mechanism for a Windows machine us
    `server_config.json` when the settings are served.
 4. Start the servers (Windows):
    ```cmd
-   remote.cmd
+   remote.cmd --whitelist 192.168.1.10 192.168.1.20
    ```
-   This runs `backend/run_servers.py` which launches both `remote_server.py` and `http_server.py` and prints their logs in the current console.
+   Pass the `--whitelist` argument with a space or comma separated list of IPs to set the allowed clients. The list is saved in `server_config.json` for future runs. This command runs `backend/run_servers.py` which launches both `remote_server.py` and `http_server.py` and prints their logs in the current console.
    On other platforms run them manually:
    ```bash
    python backend/remote_server.py
